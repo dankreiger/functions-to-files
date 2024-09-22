@@ -2,6 +2,7 @@ interface Package {
   name: 'functions-to-files',
   displayName: 'functions-to-files',
   description: 'Moves functions in a file to their own named files',
+  repository: {type: 'git', url: 'https://github.com/dankreiger/functions-to-files'},
   version: '0.0.1',
   engines: {vscode: '^1.93.0'},
   categories: ['Other'],
@@ -38,8 +39,10 @@ interface Package {
     postinstall: 'pnpx ts-json-as-const package.json'
   },
   devDependencies: {
+    '@types/bun': '^1.1.10',
+    '@types/lodash-es': '^4.17.12',
     '@types/mocha': '^10.0.7',
-    '@types/node': '20.x',
+    '@types/node': '^20.16.5',
     '@types/vscode': '^1.93.0',
     '@typescript-eslint/eslint-plugin': '^8.3.0',
     '@typescript-eslint/parser': '^8.3.0',
@@ -53,7 +56,8 @@ interface Package {
     'type-fest': '^4.26.1',
     typescript: '5.5.4',
     zod: '^3.23.8'
-  }
+  },
+  dependencies: {'lodash-es': '^4.17.21'}
 }
 
 declare const Package: Package;

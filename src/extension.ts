@@ -1,9 +1,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
 import * as ts from 'typescript';
 import * as vscode from 'vscode';
-import { createCommandId } from './internal';
+import { createCommandId, getRelevantImports } from './internal';
+
+// Helper function to find the used identifiers within a node
+function findUsedIdentifiers(node: ts.Node, identifiers: Set<string>) {
+  if (ts.isIdentifier(node)) {
+    identifiers.add(node.text);
+  }
+
+  node.forEachChild((childNode) => {
+    findUsedIdentifiers(childNode, identifiers);
+  });
+}
+
+// Function to write function content and include necessary imports
+function writeFunctionToFile(
+  newFileName: string,
+  newFileContent: string,
+  relevantImports: string[]
+) {
+  const fullContent = `${relevantImports.join('\n')}\n\n${newFileContent}`;
+  fs.writeFileSync(newFileName, fullContent);
+  vscode.window.showInformationMessage(`Created: ${newFileName}`);
+}
 
 export async function activate(context: vscode.ExtensionContext) {
   let disposable = vscode.commands.registerCommand(
@@ -15,7 +36,6 @@ export async function activate(context: vscode.ExtensionContext) {
       }
 
       const { fileName, getText } = editor.document;
-
       const sourceFile = ts.createSourceFile(
         path.basename(fileName),
         getText(),
@@ -23,17 +43,21 @@ export async function activate(context: vscode.ExtensionContext) {
         true
       );
 
-      // Directory to store the split files
       const directoryPath = path.join(path.dirname(fileName), 'split-utils');
-      if (!fs.existsSync(directoryPath)) {
-        fs.mkdirSync(directoryPath);
+      try {
+        if (!fs.existsSync(directoryPath)) {
+          fs.mkdirSync(directoryPath, { recursive: true });
+        }
+      } catch (err) {
+        return vscode.window.showErrorMessage(
+          `Failed to create directory: ${err.message}`
+        );
       }
 
+      // Iterate through each node and process function declarations
       sourceFile.forEachChild((node) => {
-        // Check for VariableStatement (e.g. const or let declarations)
         if (ts.isVariableStatement(node)) {
           node.declarationList.declarations.forEach((declaration) => {
-            // Check if the initializer is an ArrowFunction
             if (
               declaration.initializer &&
               ts.isArrowFunction(declaration.initializer)
@@ -46,24 +70,41 @@ export async function activate(context: vscode.ExtensionContext) {
                 `${functionName}.ts`
               );
 
-              // Use Printer to print the entire declaration (including 'const' or 'let')
+              // Collect the used identifiers for the current function
+              const usedIdentifiers = new Set<string>();
+              findUsedIdentifiers(declaration.initializer, usedIdentifiers);
+
+              // Get the relevant imports for this function
+              const relevantImports = getRelevantImports(
+                sourceFile,
+                usedIdentifiers
+              );
+
               const printer = ts.createPrinter();
               const newFileContent = printer.printNode(
                 ts.EmitHint.Unspecified,
-                node, // Pass the entire VariableStatement node
+                node,
                 sourceFile
               );
 
-              fs.writeFileSync(newFileName, newFileContent);
-              vscode.window.showInformationMessage(`Created: ${newFileName}`);
+              writeFunctionToFile(newFileName, newFileContent, relevantImports);
             }
           });
         }
 
-        // Existing code for handling function declarations
         if (ts.isFunctionDeclaration(node) && node.name) {
           const functionName = node.name.getText();
           const newFileName = path.join(directoryPath, `${functionName}.ts`);
+
+          // Collect the used identifiers for the current function
+          const usedIdentifiers = new Set<string>();
+          findUsedIdentifiers(node, usedIdentifiers);
+
+          // Get the relevant imports for this function
+          const relevantImports = getRelevantImports(
+            sourceFile,
+            usedIdentifiers
+          );
 
           const printer = ts.createPrinter();
           const newFileContent = printer.printNode(
@@ -72,13 +113,12 @@ export async function activate(context: vscode.ExtensionContext) {
             sourceFile
           );
 
-          fs.writeFileSync(newFileName, newFileContent);
-          vscode.window.showInformationMessage(`Created: ${newFileName}`);
+          writeFunctionToFile(newFileName, newFileContent, relevantImports);
         }
       });
 
       vscode.window.showInformationMessage(
-        'Functions split into separate files.'
+        'Functions split into separate files with relevant imports.'
       );
     }
   );
