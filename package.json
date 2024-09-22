@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/dankreiger/functions-to-files"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -20,6 +20,10 @@
       {
         "command": "functions-to-files.moveFunctionsToFiles",
         "title": "Move Functions to Files"
+      },
+      {
+        "command": "functions-to-files.moveTypesToFiles",
+        "title": "Move Types to Files"
       }
     ],
     "keybindings": [

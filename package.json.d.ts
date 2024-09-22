@@ -3,7 +3,7 @@ interface Package {
   displayName: 'functions-to-files',
   description: 'Moves functions in a file to their own named files',
   repository: {type: 'git', url: 'https://github.com/dankreiger/functions-to-files'},
-  version: '0.0.1',
+  version: '0.0.2',
   engines: {vscode: '^1.93.0'},
   categories: ['Other'],
   main: './dist/extension.js',
@@ -13,7 +13,8 @@ interface Package {
       {
         command: 'functions-to-files.moveFunctionsToFiles',
         title: 'Move Functions to Files'
-      }
+      },
+      {command: 'functions-to-files.moveTypesToFiles', title: 'Move Types to Files'}
     ],
     keybindings: [
       {
@@ -30,7 +31,8 @@ interface Package {
     'watch:esbuild': 'node esbuild.js --watch',
     'watch:tsc': 'tsc --noEmit --watch --project tsconfig.json',
     package: 'pnpm run check-types && pnpm run lint && node esbuild.js --production',
-    'prepare-package': 'npx vsce package --baseContentUrl https://github.com/dankreiger/functions-to-files --baseImagesUrl https://raw.githubusercontent.com/dankreiger/functions-to-files/main',
+    'make-executable': 'pnpm run compile && npx vsce package --baseContentUrl https://github.com/dankreiger/functions-to-files --baseImagesUrl https://raw.githubusercontent.com/dankreiger/functions-to-files/main',
+    publish: 'pnpm run make-executable && npx vsce publish',
     'compile-tests': 'tsc -p . --outDir out',
     'watch-tests': 'tsc -p . -w --outDir out',
     pretest: 'pnpm run compile-tests && pnpm run compile && pnpm run lint',
