@@ -3,7 +3,7 @@ interface Package {
   displayName: 'functions-to-files',
   description: 'Moves functions in a file to their own named files',
   repository: {type: 'git', url: 'https://github.com/dankreiger/functions-to-files'},
-  version: '0.0.2',
+  version: '0.0.3',
   engines: {vscode: '^1.93.0'},
   categories: ['Other'],
   main: './dist/extension.js',
